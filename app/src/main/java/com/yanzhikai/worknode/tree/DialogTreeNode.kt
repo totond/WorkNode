@@ -16,7 +16,7 @@ import kotlin.collections.set
  * @date 2019/11/12
  */
 open class DialogTreeNode<T>(
-    private val rawDialogNode: DialogNode<T>,
+    private val rawDialogWorkBlock: DialogWorkBlock<T>,
     private var data: T,
     var alias: String = ""
 ) :
@@ -26,16 +26,16 @@ open class DialogTreeNode<T>(
     }
 
     private val dialogNode by lazy {
-        rawDialogNode.init(data)
-        rawDialogNode.dismissCallback = {
+        rawDialogWorkBlock.init(data)
+        rawDialogWorkBlock.dismissCallback = {
             onBlockDismissCall()
         }
 
 
-        rawDialogNode.callBacks.forEach { (key, value) ->
+        rawDialogWorkBlock.callBacks.forEach { (key, value) ->
             value.callBack = { callButtonClick(key) }
         }
-        rawDialogNode
+        rawDialogWorkBlock
     }
 
     internal val id: Long = DTIdGenerator.instance.generate()

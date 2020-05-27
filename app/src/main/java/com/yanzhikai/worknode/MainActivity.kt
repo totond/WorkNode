@@ -6,11 +6,10 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import com.yanzhikai.worknode.tree.IWorkNode
-import com.yanzhikai.worknode.tree.DialogNode
+import com.yanzhikai.worknode.tree.DialogWorkBlock
 import com.yanzhikai.worknode.tree.DialogTestUtil
 import com.yanzhikai.worknode.tree.DialogTreeNode
 import io.reactivex.Observable
-import kotlinx.android.synthetic.main.activity_main.*
 import java.util.concurrent.TimeUnit
 
 
@@ -115,23 +114,23 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun buildDialog(title: String, content: String): DialogNode<Data1> {
-        return object : DialogNode<Data1>(2) {
+    private fun buildDialog(title: String, content: String): DialogWorkBlock<Data1> {
+        return object : DialogWorkBlock<Data1>(2) {
             override fun buildDialog(data: Data1): Dialog {
                 val builder = AlertDialog.Builder(this@MainActivity)
-                return DialogNode.createDialog(builder.setTitle(title).setMessage(content).create(),"是", "否", this)
+                return DialogWorkBlock.createDialog(builder.setTitle(title).setMessage(content).create(),"是", "否", this)
             }
 
         }
     }
 
-    private fun buildDialog1(title: String, content: String): DialogNode<Data1> {
-        return object : DialogNode<Data1>(2) {
+    private fun buildDialog1(title: String, content: String): DialogWorkBlock<Data1> {
+        return object : DialogWorkBlock<Data1>(2) {
             override fun buildDialog(data: Data1): Dialog {
                 val builder = AlertDialog.Builder(this@MainActivity)
-                val positiveCallBack = DialogNode.DialogButtonCallback()
-                val negativeCallback = DialogNode.DialogButtonCallback()
-                val thirdCallback = DialogNode.DialogButtonCallback()
+                val positiveCallBack = DialogWorkBlock.DialogButtonCallback()
+                val negativeCallback = DialogWorkBlock.DialogButtonCallback()
+                val thirdCallback = DialogWorkBlock.DialogButtonCallback()
                 builder.setTitle(title)
                     .setMessage(content)
                     .setPositiveButton("是") { _, _ ->
