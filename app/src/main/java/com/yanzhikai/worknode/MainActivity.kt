@@ -5,9 +5,9 @@ import android.app.Dialog
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import com.yanzhikai.worknode.tree.*
 import com.yanzhikai.worknode.tree.IWorkNode.Key.Companion.TYPE_NEGATIVE
-import com.yanzhikai.worknode.tree.IWorkNode.Key.Companion.TYPE_POSITIVE
 import com.yanzhikai.worknode.tree.IWorkNode.Key.Companion.TYPE_THIS
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
                 Log.i("jky", "onPositiveCall A")
             }
 
-            override fun callNode(key: Int) {
+            override fun callNode(key: Int?) {
                 super.callNode(key)
                 Log.i("jky", "onCall A $key")
             }
@@ -103,6 +103,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val singleNode = SimpleWorkTreeNode{
+            Toast.makeText(this, "这是最后一发", Toast.LENGTH_SHORT).show()
+        }
+
         /*
                     a
                   c   b
@@ -117,6 +121,7 @@ class MainActivity : AppCompatActivity() {
         nodeC.negativeNode = nodeF
         nodeD.positiveNode = nodeE
         nodeE.negativeNode = nodeF
+        nodeB.negativeNode = singleNode
 
         nodeA.childNodes[3] = buildDialogTreeNode("异步方式测试", "异步方式测试")
 
@@ -128,7 +133,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun buildDialog(title: String, content: String): DialogWorkBlock {
         return object : DialogWorkBlock(2) {
-            override fun buildDialog(data: BaseNodeData): Dialog {
+            override fun buildDialog(data: BaseNodeData): Dialog? {
                 val builder = AlertDialog.Builder(this@MainActivity)
                 return createDialog(
                     builder.setTitle(title).setMessage(content).create(),
@@ -143,7 +148,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun buildDialog1(title: String, content: String): DialogWorkBlock {
         return object : DialogWorkBlock(2) {
-            override fun buildDialog(data: BaseNodeData): Dialog {
+            override fun buildDialog(data: BaseNodeData): Dialog? {
                 val builder = AlertDialog.Builder(this@MainActivity)
                 val positiveCallBack = BlockCallback()
                 val negativeCallback = BlockCallback()

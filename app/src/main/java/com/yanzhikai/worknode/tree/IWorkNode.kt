@@ -27,7 +27,7 @@ interface IWorkNode {
      * 所有Node的key按钮回调，需要自定义key值
      * @param key Int参 自定义key值，注意考下面的CallBackType，不要覆盖里面的值，规则：大于0
      */
-    fun callNode(key: Int)
+    fun callNode(key: Int?)
 
     /**
      * 流程处理回调，需要在这里调用 {@link #callNode(key: Int)}来确定调用自身（Type.THIS）,还是其它

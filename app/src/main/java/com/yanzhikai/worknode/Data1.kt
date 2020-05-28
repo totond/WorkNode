@@ -9,6 +9,6 @@ data class Data1(
     var d: Int = 1,
     var e: Int = 1,
     var f: Int = 1
-): BaseNodeData() {
+): BaseNodeData {
 
 }

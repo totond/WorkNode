@@ -16,7 +16,7 @@ import kotlin.collections.set
  * @date 2019/11/12
  */
 open class WorkTreeNode(
-    private val rawWorkBlock: DialogWorkBlock,
+    private val rawWorkBlock: DialogWorkBlock?,
     var alias: String = ""
 ) : IWorkNode {
 
@@ -24,18 +24,19 @@ open class WorkTreeNode(
         private const val TAG = "WorkTreeNode"
     }
 
-    private lateinit var mData: BaseNodeData
+    internal lateinit var nodeData: BaseNodeData
 
     private val workBlockLazy = lazy {
-        rawWorkBlock.init(mData)
-        rawWorkBlock.dismissCallback = {
-            onBlockDismissCall()
-        }
+        rawWorkBlock?.apply {
+            init(nodeData)
+            dismissCallback = {
+                onBlockDismissCall()
+            }
 
-        rawWorkBlock.callBacks.forEach { (key, value) ->
-            value.callBack = { callButtonClick(key) }
+            callBacks.forEach { (key, value) ->
+                value.callBack = { callButtonClick(key) }
+            }
         }
-        rawWorkBlock
     }
 
     internal val id: Long = DTIdGenerator.instance.generate()
@@ -54,7 +55,7 @@ open class WorkTreeNode(
 
     var childNodes: HashMap<Int, WorkTreeNode?> = HashMap(2)
 
-    private var showNode: Int? = TYPE_THIS
+    var manager: WorkTreeManager? = null
 
     private val compositeDisposable = CompositeDisposable()
 
@@ -64,20 +65,16 @@ open class WorkTreeNode(
         }
     }
 
-    fun setShowNode(node: Int?) {
-        showNode = node
-    }
-
 
     @CallSuper
     final override fun onBlockPositiveCall() {
-        onPositiveCall(mData)
+        onPositiveCall(nodeData)
         onNodeCall(positiveNode)
     }
 
     @CallSuper
     final override fun onBlockNegativeCall() {
-        onNegativeCall(mData)
+        onNegativeCall(nodeData)
         onNodeCall(negativeNode)
 
     }
@@ -87,7 +84,7 @@ open class WorkTreeNode(
     open fun onNegativeCall(data: BaseNodeData) {}
 
     @CallSuper
-    override fun callNode(key: Int) {
+    override fun callNode(key: Int?) {
         if (key == TYPE_THIS) {
             show()
         } else {
@@ -104,12 +101,15 @@ open class WorkTreeNode(
         return null
     }
 
+    open fun show() {
+        workBlockLazy.value?.show()
+    }
     /**
      * 从这个节点开始
      * @return CompositeDisposable
      */
     fun start(data: BaseNodeData): CompositeDisposable {
-        mData = data
+        nodeData = data
         processNodeData(data)?.let {
             compositeDisposable.add(it)
         }
@@ -126,23 +126,22 @@ open class WorkTreeNode(
         }
     }
 
-    fun onDestroy() {
+    internal fun onDestroy() {
         compositeDisposable.clear()
     }
 
     // region private
 
-    private fun show() {
-        workBlockLazy.value.show()
-    }
 
     private fun onNodeCall(node: WorkTreeNode?) {
         node?.let {
-            compositeDisposable.add(it.start(mData))
+            it.manager = manager
+            manager = null
+            compositeDisposable.add(it.start(nodeData))
         }
 
         if (workBlockLazy.isInitialized()) {
-            workBlockLazy.value.dismiss()
+            workBlockLazy.value?.dismiss()
         }
     }
 

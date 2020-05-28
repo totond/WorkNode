@@ -22,7 +22,7 @@ abstract class DialogWorkBlock constructor(initialCallbackNum: Int) : WorkBlock(
      * @param data S 可以根据传入的数据来确定Dialog的表现
      * @return Dialog
      */
-    abstract fun buildDialog(data: BaseNodeData): Dialog
+    abstract fun buildDialog(data: BaseNodeData): Dialog?
 
     override fun init(data: BaseNodeData) {
         dialog = buildDialog(data)
