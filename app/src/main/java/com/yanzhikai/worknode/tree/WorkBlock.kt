@@ -4,13 +4,13 @@ package com.yanzhikai.worknode.tree
  * author: jacketyan
  * date: 2020/5/27
  */
-abstract class WorkBlock<S> constructor(initialCallbackNum: Int) {
+abstract class WorkBlock constructor(initialCallbackNum: Int) {
 
     var dismissCallback: (() -> Unit)? = null
 
     var callBacks: HashMap<Int, BlockCallback> = HashMap(initialCallbackNum)
 
-    abstract fun init(data: S)
+    abstract fun init(data: BaseNodeData)
 
     abstract fun show()
 

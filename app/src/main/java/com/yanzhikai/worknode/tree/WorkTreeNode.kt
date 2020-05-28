@@ -3,28 +3,28 @@ package com.yanzhikai.worknode.tree
 import android.support.annotation.CallSuper
 import android.text.TextUtils
 import android.util.Log
-import com.yanzhikai.worknode.tree.IWorkNode.Type.Companion.THIS
+import com.yanzhikai.worknode.tree.IWorkNode.Key.Companion.TYPE_THIS
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
 
 /**
- * Dialog管理控件，把每个需要弹出的Dialog的逻辑（为什么弹，弹的内容，点击回调）
- * 使用者可以继承DialogTreeNode，传入data，按需实现各个回调
+ * 流程管理节点
  * @author jacketyan
  * @date 2019/11/12
  */
-open class WorkTreeNode<T : Any, S : Any>(
-    private val rawWorkBlock: DialogWorkBlock<S>,
+open class WorkTreeNode(
+    private val rawWorkBlock: DialogWorkBlock,
     var alias: String = ""
-) : IWorkNode<S> {
+) : IWorkNode {
 
     companion object {
         private const val TAG = "WorkTreeNode"
     }
 
-    private lateinit var mData: S
+    private lateinit var mData: BaseNodeData
 
     private val workBlockLazy = lazy {
         rawWorkBlock.init(mData)
@@ -40,21 +40,21 @@ open class WorkTreeNode<T : Any, S : Any>(
 
     internal val id: Long = DTIdGenerator.instance.generate()
 
-    var positiveNode: WorkTreeNode<*, S>? = null
+    var positiveNode: WorkTreeNode? = null
         set(value) {
-            childNodes[IWorkNode.Type.POSITIVE] = value
+            childNodes[IWorkNode.Key.TYPE_POSITIVE] = value
             field = value
         }
 
-    var negativeNode: WorkTreeNode<*, S>? = null
+    var negativeNode: WorkTreeNode? = null
         set(value) {
-            childNodes[IWorkNode.Type.NEGATIVE] = value
+            childNodes[IWorkNode.Key.TYPE_NEGATIVE] = value
             field = value
         }
 
-    var childNodes: HashMap<Int, WorkTreeNode<*, S>?> = HashMap(2)
+    var childNodes: HashMap<Int, WorkTreeNode?> = HashMap(2)
 
-    private var showNode: Int? = THIS
+    private var showNode: Int? = TYPE_THIS
 
     private val compositeDisposable = CompositeDisposable()
 
@@ -72,26 +72,26 @@ open class WorkTreeNode<T : Any, S : Any>(
     @CallSuper
     final override fun onBlockPositiveCall() {
         onPositiveCall(mData)
-        callNode(positiveNode)
+        onNodeCall(positiveNode)
     }
 
     @CallSuper
     final override fun onBlockNegativeCall() {
         onNegativeCall(mData)
-        callNode(negativeNode)
+        onNodeCall(negativeNode)
 
     }
 
-    open fun onPositiveCall(data: S) {}
+    open fun onPositiveCall(data: BaseNodeData) {}
 
-    open fun onNegativeCall(data: S) {}
+    open fun onNegativeCall(data: BaseNodeData) {}
 
     @CallSuper
-    override fun onNodeCall(key: Int) {
-        if (key == THIS) {
+    override fun callNode(key: Int) {
+        if (key == TYPE_THIS) {
             show()
         } else {
-            callNode(childNodes[key])
+            onNodeCall(childNodes[key])
         }
     }
 
@@ -99,31 +99,29 @@ open class WorkTreeNode<T : Any, S : Any>(
         Log.i(TAG, "onDismissCall")
     }
 
-    override fun processNodeData(data: S): Boolean {
-        onNodeCall(THIS)
-        return false
-    }
-
-    open fun show() {
-        workBlockLazy.value.show()
+    override fun processNodeData(data: BaseNodeData): Disposable? {
+        callNode(TYPE_THIS)
+        return null
     }
 
     /**
      * 从这个节点开始
      * @return CompositeDisposable
      */
-    fun start(data: S): CompositeDisposable {
+    fun start(data: BaseNodeData): CompositeDisposable {
         mData = data
-        processNodeData(data)
+        processNodeData(data)?.let {
+            compositeDisposable.add(it)
+        }
         return compositeDisposable
     }
 
     fun testShow(show: Int?) {
         if (show != null) {
-            if (show == IWorkNode.Type.THIS) {
+            if (show == IWorkNode.Key.TYPE_THIS) {
                 show()
             } else {
-                onNodeCall(show)
+                callNode(show)
             }
         }
     }
@@ -132,7 +130,13 @@ open class WorkTreeNode<T : Any, S : Any>(
         compositeDisposable.clear()
     }
 
-    private fun callNode(node: WorkTreeNode<*, S>?) {
+    // region private
+
+    private fun show() {
+        workBlockLazy.value.show()
+    }
+
+    private fun onNodeCall(node: WorkTreeNode?) {
         node?.let {
             compositeDisposable.add(it.start(mData))
         }
@@ -148,14 +152,16 @@ open class WorkTreeNode<T : Any, S : Any>(
      */
     private fun callButtonClick(key: Int) {
         when (key) {
-            IWorkNode.Type.POSITIVE -> onBlockPositiveCall()
-            IWorkNode.Type.NEGATIVE -> onBlockNegativeCall()
-            else -> onNodeCall(key)
+            IWorkNode.Key.TYPE_POSITIVE -> onBlockPositiveCall()
+            IWorkNode.Key.TYPE_NEGATIVE -> onBlockNegativeCall()
+            else -> callNode(key)
         }
     }
 
+    //endregion
+
     final override fun equals(other: Any?): Boolean {
-        if (other is WorkTreeNode<*, *>) {
+        if (other is WorkTreeNode) {
             return id == other.id
         }
         return false

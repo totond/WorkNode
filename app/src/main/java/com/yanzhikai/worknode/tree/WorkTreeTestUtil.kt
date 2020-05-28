@@ -14,7 +14,7 @@ object WorkTreeTestUtil {
     // region 找出每一个可能的分支，先序遍历
 
     @JvmStatic
-    fun getOutputTrees(root: WorkTreeNode<*, *>): List<String> {
+    fun getOutputTrees(root: WorkTreeNode): List<String> {
         val resultList = ArrayList<String>()
         val curList = Array(50) { "" }
 
@@ -24,7 +24,7 @@ object WorkTreeTestUtil {
     }
 
     private fun checkOneNode(
-        node: WorkTreeNode<*, *>,
+        node: WorkTreeNode,
         curList: Array<String>,
         resultList: ArrayList<String>,
         index: Int

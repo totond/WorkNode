@@ -5,11 +5,14 @@ import android.app.Dialog
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import com.yanzhikai.worknode.tree.IWorkNode
-import com.yanzhikai.worknode.tree.DialogWorkBlock
-import com.yanzhikai.worknode.tree.WorkTreeTestUtil
-import com.yanzhikai.worknode.tree.WorkTreeNode
+import com.yanzhikai.worknode.tree.*
+import com.yanzhikai.worknode.tree.IWorkNode.Key.Companion.TYPE_NEGATIVE
+import com.yanzhikai.worknode.tree.IWorkNode.Key.Companion.TYPE_POSITIVE
+import com.yanzhikai.worknode.tree.IWorkNode.Key.Companion.TYPE_THIS
 import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.concurrent.TimeUnit
 
@@ -29,25 +32,33 @@ class MainActivity : AppCompatActivity() {
     private fun buildNodes() {
         val dialogA = buildDialog1("A", "我是A")
         val data1 = Data1()
-        val nodeA = object : WorkTreeNode<Data1, Data1>(dialogA, "a") {
+        val nodeA = object : WorkTreeNode(dialogA, "a") {
 //            override fun showWhat(data: Data1): Int? {
 //                data.let {
 //                    return if (it.a > 0) IWorkNode.Type.THIS else null
 //                }
 //            }
 
-            override fun onPositiveCall(data: Data1) {
+            override fun onPositiveCall(data: BaseNodeData) {
                 Log.i("jky", "onPositiveCall A")
             }
 
-            override fun onNodeCall(key: Int) {
-                super.onNodeCall(key)
+            override fun callNode(key: Int) {
+                super.callNode(key)
                 Log.i("jky", "onCall A $key")
+            }
+
+            override fun processNodeData(data: BaseNodeData): Disposable? {
+                if (data is Data1) {
+                    data.e = 2
+                }
+                callNode(TYPE_THIS)
+                return null
             }
         }
 
         val dialogB = buildDialog("B", "我是B")
-        val nodeB = object : WorkTreeNode<Data1, Data1>(dialogB, "b") {
+        val nodeB = object : WorkTreeNode(dialogB, "b") {
 //            override fun showWhat(data: Data1): Int? {
 //                data?.let {
 //                    return if (it.b > 0) IWorkNode.Type.THIS else null
@@ -57,29 +68,29 @@ class MainActivity : AppCompatActivity() {
         }
 
         val dialogC = buildDialog("C", "我是C")
-        val nodeC = WorkTreeNode<Data1, Data1>(dialogC, "c")
+        val nodeC = WorkTreeNode(dialogC, "c")
 
         val dialogD = buildDialog("D", "我是D")
-        val nodeD = object : WorkTreeNode<Data1, Data1>(dialogD, "d") {
-//            override fun showWhat(data: Data1): Int? {
-//                data.let {
-//                    return if (it.d > 0) IWorkNode.Type.THIS else null
-//                }
-//            }
+        val nodeD = object : WorkTreeNode(dialogD, "d") {
+            override fun processNodeData(data: BaseNodeData): Disposable? {
+                return super.processNodeData(data)
+            }
         }
 
         val dialogE = buildDialog("E", "我是E")
-        val nodeE = object : WorkTreeNode<Data1, Data1>(dialogE, "e") {
-//            override fun showWhat(data: Data1): Int? {
-//                data?.let {
-//                    return if (it.e > 0) IWorkNode.Type.THIS else null
-//                }
-//                return null
-//            }
+        val nodeE = object : WorkTreeNode(dialogE, "e") {
+            override fun processNodeData(data: BaseNodeData): Disposable? {
+                if (data is Data1 && data.e > 0) {
+                    callNode(TYPE_THIS)
+                } else {
+                    callNode(TYPE_NEGATIVE)
+                }
+                return null
+            }
         }
 
         val dialogF = buildDialog("F", "我是F")
-        val nodeF = object : WorkTreeNode<Data1, Data1>(dialogF, "f") {
+        val nodeF = object : WorkTreeNode(dialogF, "f") {
 //            override fun showWhat(data: Data1): Int? {
 //                data?.let {
 //                    return if (it.f > 0) IWorkNode.Type.THIS else null
@@ -87,7 +98,7 @@ class MainActivity : AppCompatActivity() {
 //                return null
 //            }
 
-            override fun processNodeData(data: Data1): Boolean {
+            override fun processNodeData(data: BaseNodeData): Disposable? {
                 return super.processNodeData(data)
             }
         }
@@ -115,9 +126,9 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun buildDialog(title: String, content: String): DialogWorkBlock<Data1> {
-        return object : DialogWorkBlock<Data1>(2) {
-            override fun buildDialog(data: Data1): Dialog {
+    private fun buildDialog(title: String, content: String): DialogWorkBlock {
+        return object : DialogWorkBlock(2) {
+            override fun buildDialog(data: BaseNodeData): Dialog {
                 val builder = AlertDialog.Builder(this@MainActivity)
                 return createDialog(
                     builder.setTitle(title).setMessage(content).create(),
@@ -130,9 +141,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun buildDialog1(title: String, content: String): DialogWorkBlock<Data1> {
-        return object : DialogWorkBlock<Data1>(2) {
-            override fun buildDialog(data: Data1): Dialog {
+    private fun buildDialog1(title: String, content: String): DialogWorkBlock {
+        return object : DialogWorkBlock(2) {
+            override fun buildDialog(data: BaseNodeData): Dialog {
                 val builder = AlertDialog.Builder(this@MainActivity)
                 val positiveCallBack = BlockCallback()
                 val negativeCallback = BlockCallback()
@@ -149,8 +160,8 @@ class MainActivity : AppCompatActivity() {
                         thirdCallback.onCall()
                     }
 
-                callBacks.put(IWorkNode.Type.POSITIVE, positiveCallBack)
-                callBacks.put(IWorkNode.Type.NEGATIVE, negativeCallback)
+                callBacks.put(IWorkNode.Key.TYPE_POSITIVE, positiveCallBack)
+                callBacks.put(IWorkNode.Key.TYPE_NEGATIVE, negativeCallback)
                 callBacks.put(3, thirdCallback)
 
                 return builder.create()
@@ -160,14 +171,22 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun buildDialogTreeNode(title: String, content: String): WorkTreeNode<Data1, Data1> {
-        val mockObservable = Observable.just(true).delay(500, TimeUnit.MILLISECONDS)
+    private fun buildDialogTreeNode(title: String, content: String): WorkTreeNode {
         val dialogNode = buildDialog(title, content)
-        val dialogTreeNode = object : WorkTreeNode<Data1, Data1>(dialogNode) {
 
+        return object : WorkTreeNode(dialogNode) {
+            override fun processNodeData(data: BaseNodeData): Disposable? {
+                tv_test.text = "loading..."
+                return Observable.just(true)
+                    .delay(2000, TimeUnit.MILLISECONDS)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe{
+                        callNode(TYPE_THIS)
+                        tv_test.text = "Hello"
+                    }
+            }
         }
-
-        return dialogTreeNode
 
     }
 }
