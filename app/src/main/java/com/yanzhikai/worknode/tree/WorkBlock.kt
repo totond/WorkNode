@@ -4,19 +4,25 @@ package com.yanzhikai.worknode.tree
  * author: jacketyan
  * date: 2020/5/27
  */
-abstract class WorkBlock<T> constructor(initialCallbackNum: Int) {
+abstract class WorkBlock<S> constructor(initialCallbackNum: Int) {
 
     var dismissCallback: (() -> Unit)? = null
 
-    var callBacks: HashMap<Int, DialogWorkBlock.DialogButtonCallback> = HashMap(initialCallbackNum)
+    var callBacks: HashMap<Int, BlockCallback> = HashMap(initialCallbackNum)
 
-    companion object {
-        const val TAG = "WorkBlock"
-    }
-
-    abstract fun init(data: T)
+    abstract fun init(data: S)
 
     abstract fun show()
 
     abstract fun dismiss()
+
+    /**
+     * Block回调方式封装
+     */
+    class BlockCallback(var callBack: (() -> Unit)? = null) {
+
+        fun onCall() {
+            callBack?.invoke()
+        }
+    }
 }

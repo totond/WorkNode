@@ -13,18 +13,18 @@ import android.content.DialogInterface
  * 自定义Dialog的转化方式，
  * 需要以key，value方式传入callBack：key作为识别callBacks的标识（具体规则是>= 0参考DTNodeCallBack.CallBackType），value则是实现DialogButtonCallback的方式
  */
-abstract class DialogWorkBlock<T> constructor(initialCallbackNum: Int) : WorkBlock<T>(initialCallbackNum){
+abstract class DialogWorkBlock<S> constructor(initialCallbackNum: Int) : WorkBlock<S>(initialCallbackNum){
 
     private var dialog: Dialog? = null
 
     /**
      * 生成Dialog的方法，使用者可以通过需要重写这个方法进行DialogNode.callBacks与Dialog按钮回调的绑定
-     * @param data T 可以根据传入的数据来确定Dialog的表现
+     * @param data S 可以根据传入的数据来确定Dialog的表现
      * @return Dialog
      */
-    abstract fun buildDialog(data: T): Dialog
+    abstract fun buildDialog(data: S): Dialog
 
-    override fun init(data: T) {
+    override fun init(data: S) {
         dialog = buildDialog(data)
     }
 
@@ -53,7 +53,7 @@ abstract class DialogWorkBlock<T> constructor(initialCallbackNum: Int) : WorkBlo
         ): Dialog {
 
             positive?.let {
-                val positiveCallback = DialogButtonCallback()
+                val positiveCallback = BlockCallback()
                 alertDialogBuilder.setPositiveButton(positive) { _: DialogInterface, _: Int ->
                     positiveCallback.onCall()
                 }
@@ -61,7 +61,7 @@ abstract class DialogWorkBlock<T> constructor(initialCallbackNum: Int) : WorkBlo
             }
 
             negative?.let {
-                val negativeCallback = DialogButtonCallback()
+                val negativeCallback = BlockCallback()
                 alertDialogBuilder.setNegativeButton(negative) { _: DialogInterface, _: Int ->
                     negativeCallback.onCall()
                 }
@@ -82,7 +82,7 @@ abstract class DialogWorkBlock<T> constructor(initialCallbackNum: Int) : WorkBlo
         @JvmStatic
         fun createDialog(dialog: AlertDialog, positive: String?, negative: String?, dialogWorkBlock: DialogWorkBlock<*>): Dialog {
             positive?.let {
-                val positiveCallback = DialogButtonCallback()
+                val positiveCallback = BlockCallback()
                 dialog.setButton(DialogInterface.BUTTON_POSITIVE, positive) { _: DialogInterface, _: Int ->
                     positiveCallback.onCall()
                 }
@@ -90,7 +90,7 @@ abstract class DialogWorkBlock<T> constructor(initialCallbackNum: Int) : WorkBlo
             }
 
             negative?.let {
-                val negativeCallback = DialogButtonCallback()
+                val negativeCallback = BlockCallback()
                 dialog.setButton(DialogInterface.BUTTON_NEGATIVE, negative) { _: DialogInterface, _: Int ->
                     negativeCallback.onCall()
                 }
@@ -102,13 +102,5 @@ abstract class DialogWorkBlock<T> constructor(initialCallbackNum: Int) : WorkBlo
 
     }
 
-    /**
-     * Dialog回调方式封装
-     */
-    class DialogButtonCallback(var callBack: (() -> Unit)? = null) {
 
-        fun onCall() {
-            callBack?.invoke()
-        }
-    }
 }

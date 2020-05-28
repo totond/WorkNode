@@ -5,7 +5,7 @@ import java.lang.StringBuilder
 /**
  * DialogTree测试工具
  */
-object DialogTestUtil {
+object WorkTreeTestUtil {
 
     const val DIALOG_END = "#end"
 
@@ -14,7 +14,7 @@ object DialogTestUtil {
     // region 找出每一个可能的分支，先序遍历
 
     @JvmStatic
-    fun getOutputTrees(root: DialogTreeNode<out Any>): List<String> {
+    fun getOutputTrees(root: WorkTreeNode<*, *>): List<String> {
         val resultList = ArrayList<String>()
         val curList = Array(50) { "" }
 
@@ -24,7 +24,7 @@ object DialogTestUtil {
     }
 
     private fun checkOneNode(
-        node: DialogTreeNode<out Any>,
+        node: WorkTreeNode<*, *>,
         curList: Array<String>,
         resultList: ArrayList<String>,
         index: Int

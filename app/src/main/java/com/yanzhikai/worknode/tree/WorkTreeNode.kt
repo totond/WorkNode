@@ -15,46 +15,46 @@ import kotlin.collections.set
  * @author jacketyan
  * @date 2019/11/12
  */
-open class DialogTreeNode<T>(
-    private val rawDialogWorkBlock: DialogWorkBlock<T>,
-    private var data: T,
+open class WorkTreeNode<T : Any, S : Any>(
+    private val rawWorkBlock: DialogWorkBlock<S>,
     var alias: String = ""
-) :
-    IWorkNode<T> {
+) : IWorkNode<S> {
+
     companion object {
-        private const val TAG = "DialogTreeNode"
+        private const val TAG = "WorkTreeNode"
     }
 
-    private val dialogNode by lazy {
-        rawDialogWorkBlock.init(data)
-        rawDialogWorkBlock.dismissCallback = {
+    private lateinit var mData: S
+
+    private val workBlockLazy = lazy {
+        rawWorkBlock.init(mData)
+        rawWorkBlock.dismissCallback = {
             onBlockDismissCall()
         }
 
-
-        rawDialogWorkBlock.callBacks.forEach { (key, value) ->
+        rawWorkBlock.callBacks.forEach { (key, value) ->
             value.callBack = { callButtonClick(key) }
         }
-        rawDialogWorkBlock
+        rawWorkBlock
     }
 
     internal val id: Long = DTIdGenerator.instance.generate()
 
-    var positiveNode: DialogTreeNode<out Any>? = null
+    var positiveNode: WorkTreeNode<*, S>? = null
         set(value) {
             childNodes[IWorkNode.Type.POSITIVE] = value
             field = value
         }
 
-    var negativeNode: DialogTreeNode<out Any>? = null
+    var negativeNode: WorkTreeNode<*, S>? = null
         set(value) {
             childNodes[IWorkNode.Type.NEGATIVE] = value
             field = value
         }
 
-    var childNodes: HashMap<Int, DialogTreeNode<out Any>?> = HashMap(2)
+    var childNodes: HashMap<Int, WorkTreeNode<*, S>?> = HashMap(2)
 
-    private var showNode: Int? = IWorkNode.Type.THIS
+    private var showNode: Int? = THIS
 
     private val compositeDisposable = CompositeDisposable()
 
@@ -64,27 +64,27 @@ open class DialogTreeNode<T>(
         }
     }
 
-    fun setShowNode(node: Int?){
+    fun setShowNode(node: Int?) {
         showNode = node
     }
 
 
     @CallSuper
     final override fun onBlockPositiveCall() {
-        onPositiveCall(data)
+        onPositiveCall(mData)
         callNode(positiveNode)
     }
 
     @CallSuper
     final override fun onBlockNegativeCall() {
-        onNegativeCall(data)
+        onNegativeCall(mData)
         callNode(negativeNode)
 
     }
 
-    open fun onPositiveCall(data: T) {}
+    open fun onPositiveCall(data: S) {}
 
-    open fun onNegativeCall(data: T) {}
+    open fun onNegativeCall(data: S) {}
 
     @CallSuper
     override fun onNodeCall(key: Int) {
@@ -99,22 +99,21 @@ open class DialogTreeNode<T>(
         Log.i(TAG, "onDismissCall")
     }
 
-    override fun processNodeData(data: T): Boolean {
+    override fun processNodeData(data: S): Boolean {
         onNodeCall(THIS)
         return false
     }
 
-
     open fun show() {
-        dialogNode.show()
+        workBlockLazy.value.show()
     }
 
     /**
      * 从这个节点开始
      * @return CompositeDisposable
      */
-    fun start(): CompositeDisposable {
-
+    fun start(data: S): CompositeDisposable {
+        mData = data
         processNodeData(data)
         return compositeDisposable
     }
@@ -133,12 +132,14 @@ open class DialogTreeNode<T>(
         compositeDisposable.clear()
     }
 
-    private fun callNode(node: DialogTreeNode<out Any>?) {
+    private fun callNode(node: WorkTreeNode<*, S>?) {
         node?.let {
-            compositeDisposable.add(it.start())
+            compositeDisposable.add(it.start(mData))
         }
 
-        dialogNode.dismiss()
+        if (workBlockLazy.isInitialized()) {
+            workBlockLazy.value.dismiss()
+        }
     }
 
     /**
@@ -154,7 +155,7 @@ open class DialogTreeNode<T>(
     }
 
     final override fun equals(other: Any?): Boolean {
-        if (other is DialogTreeNode<*>) {
+        if (other is WorkTreeNode<*, *>) {
             return id == other.id
         }
         return false
