@@ -3,7 +3,7 @@ package com.yanzhikai.worknode.tree
 import java.lang.StringBuilder
 
 /**
- * DialogTree测试工具
+ * WorkTree测试工具
  */
 object WorkTreeTestUtil {
 
@@ -11,7 +11,7 @@ object WorkTreeTestUtil {
 
     const val DIALOG_REPEAT = "#repeat"
 
-    // region 找出每一个可能的分支，先序遍历
+    // region 找出每一个可能的分支，中序遍历
 
     @JvmStatic
     fun getOutputTrees(root: WorkTreeNode): List<String> {

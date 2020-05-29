@@ -3,7 +3,7 @@ package com.yanzhikai.worknode.tree
 import io.reactivex.disposables.Disposable
 
 /**
- *
+ * WorkNode接口定义
  * @author jacketyan
  * @date 2019/11/12
  */
@@ -39,7 +39,7 @@ interface IWorkNode {
 
 
 
-    class Key {
+    interface Key {
         companion object {
             //自身展示回调
             const val TYPE_THIS = -1

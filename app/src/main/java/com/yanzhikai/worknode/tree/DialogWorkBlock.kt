@@ -5,10 +5,9 @@ import android.app.Dialog
 import android.content.DialogInterface
 
 /**
- * 用于生成DialogTreeNode转化器
- * 把用户使用的Dialog，转化为DialogTreeNode所需要的DialogNode
+ * 封装了Dialog作为用户交互的WorkBlock
  *
- * 使用：重写buildDialog()
+ * 使用：重写buildDialog(data: BaseNodeData): Dialog? 来生成对应的Dialog
  *
  * 自定义Dialog的转化方式，
  * 需要以key，value方式传入callBack：key作为识别callBacks的标识（自定义的规则是>= 0参考IWorkNode.TYPE），value则是实现DialogButtonCallback的方式
@@ -73,7 +72,7 @@ abstract class DialogWorkBlock constructor(initialCallbackNum: Int) : WorkBlock(
 
 
         /**
-         * 通过传入AlertDialog来生成Dialog
+         * 通过传入AlertDialog来生成Dialog，并且绑定CallBack
          * @param dialog dialog
          * @param positive String? 确认按钮文案，为空则是没有确认回调
          * @param negative String? 取消按钮文案，为空则是没有确认回调

@@ -110,6 +110,7 @@ open class WorkTreeNode(
      */
     fun start(data: BaseNodeData): CompositeDisposable {
         nodeData = data
+
         processNodeData(data)?.let {
             compositeDisposable.add(it)
         }
