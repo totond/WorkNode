@@ -27,11 +27,11 @@ abstract class DialogWorkBlock constructor(initialCallbackNum: Int) : WorkBlock(
         dialog = buildDialog(data)
     }
 
-    override fun show() {
+    override fun action() {
         dialog?.show()
     }
 
-    override fun dismiss() {
+    override fun finish() {
         dialog?.dismiss()
     }
 

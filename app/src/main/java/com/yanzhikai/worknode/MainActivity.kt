@@ -171,7 +171,9 @@ class MainActivity : AppCompatActivity() {
 
         nodeA.childNodes[3] = buildDialogTreeNode("异步方式测试", "异步方式测试")
 
-        nodeA.start(data1)
+        WorkTreeManager(nodeA).apply {
+            nodeStart(data1)
+        }
 
         Log.i("jky", WorkTreeTestUtil.getOutputTrees(nodeA).toString())
 

@@ -11,7 +11,7 @@ import kotlin.collections.component2
 import kotlin.collections.set
 
 /**
- * 流程管理节点
+ * 流程管理节点,通过实现{@link #processNodeData(data: BaseNodeData)来实现数据处理和节点触发
  * @author jacketyan
  * @date 2019/11/12
  */
@@ -96,19 +96,25 @@ open class WorkTreeNode(
         Log.i(TAG, "onDismissCall")
     }
 
+    /**
+     * 流程处理回调，需要在这里调用 {@link #callNode(key: Int)}来确定调用自身（Type.THIS）,还是其它
+     * 在这里可以进行异步操作，异步操作后请return 对应的Disposable，方便全局取消
+     * @param data BaseNodeData 传入的数据
+     * @return Disposable?
+     */
     override fun processNodeData(data: BaseNodeData): Disposable? {
         callNode(TYPE_THIS)
         return null
     }
 
     open fun show() {
-        workBlockLazy.value?.show()
+        workBlockLazy.value?.action()
     }
     /**
      * 从这个节点开始
      * @return CompositeDisposable
      */
-    fun start(data: BaseNodeData): CompositeDisposable {
+    internal fun start(data: BaseNodeData): CompositeDisposable {
         nodeData = data
 
         processNodeData(data)?.let {
@@ -142,7 +148,7 @@ open class WorkTreeNode(
         }
 
         if (workBlockLazy.isInitialized()) {
-            workBlockLazy.value?.dismiss()
+            workBlockLazy.value?.finish()
         }
     }
 
