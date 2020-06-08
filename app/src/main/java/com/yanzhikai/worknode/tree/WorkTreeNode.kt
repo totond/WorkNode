@@ -4,6 +4,8 @@ import android.support.annotation.CallSuper
 import android.text.TextUtils
 import android.util.Log
 import com.yanzhikai.worknode.tree.IWorkNode.Key.Companion.TYPE_THIS
+import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import kotlin.collections.component1
@@ -25,6 +27,8 @@ open class WorkTreeNode(
     }
 
     internal lateinit var nodeData: BaseNodeData
+
+    private lateinit var manager: WorkTreeManager
 
     private val workBlockLazy = lazy {
         rawWorkBlock?.apply {
@@ -55,9 +59,7 @@ open class WorkTreeNode(
 
     var childNodes: HashMap<Int, WorkTreeNode?> = HashMap(2)
 
-    var manager: WorkTreeManager? = null
 
-    private val compositeDisposable = CompositeDisposable()
 
     init {
         if (TextUtils.isEmpty(alias)) {
@@ -69,13 +71,13 @@ open class WorkTreeNode(
     @CallSuper
     final override fun onBlockPositiveCall() {
         onPositiveCall(nodeData)
-        onNodeCall(positiveNode)
+        manager.onNodeCall(positiveNode)
     }
 
     @CallSuper
     final override fun onBlockNegativeCall() {
         onNegativeCall(nodeData)
-        onNodeCall(negativeNode)
+        manager.onNodeCall(negativeNode)
 
     }
 
@@ -88,7 +90,7 @@ open class WorkTreeNode(
         if (key == TYPE_THIS) {
             action()
         } else {
-            onNodeCall(childNodes[key])
+            manager.onNodeCall(childNodes[key])
         }
     }
 
@@ -114,13 +116,23 @@ open class WorkTreeNode(
      * 从这个节点开始
      * @return CompositeDisposable
      */
-    internal fun start(data: BaseNodeData): CompositeDisposable {
+    internal fun start(data: BaseNodeData, manager: WorkTreeManager): CompositeDisposable {
         nodeData = data
+        this.manager = manager
 
-        processNodeData(data)?.let {
-            compositeDisposable.add(it)
+        return CompositeDisposable().apply {
+            Observable.just(data)
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext {
+                    processNodeData(data)?.let {
+                        add(it)
+                    }
+                }
+                .subscribe()
+                .let {
+                    add(it)
+                }
         }
-        return compositeDisposable
     }
 
     fun testShow(show: Int?) {
@@ -133,27 +145,13 @@ open class WorkTreeNode(
         }
     }
 
-    internal fun onDestroy() {
-        compositeDisposable.clear()
+    internal fun onFinish() {
         if (workBlockLazy.isInitialized()) {
             workBlockLazy.value?.finish()
         }
     }
 
     // region private
-
-
-    private fun onNodeCall(node: WorkTreeNode?) {
-        node?.let {
-            it.manager = manager
-            manager = null
-            compositeDisposable.add(it.start(nodeData))
-        }
-
-        if (workBlockLazy.isInitialized()) {
-            workBlockLazy.value?.finish()
-        }
-    }
 
     /**
      * 根据key值调用对应回调
