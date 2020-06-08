@@ -10,7 +10,7 @@ import io.reactivex.disposables.Disposable
  */
 open class SimpleWorkTreeNode(alias: String = "", internal var callBack:((data: BaseNodeData) -> Unit)?): WorkTreeNode(null, alias) {
 
-    override fun show() {
+    override fun action() {
         callBack?.invoke(nodeData)
     }
 

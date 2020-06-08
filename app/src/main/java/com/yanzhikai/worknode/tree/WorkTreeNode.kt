@@ -86,7 +86,7 @@ open class WorkTreeNode(
     @CallSuper
     override fun callNode(key: Int?) {
         if (key == TYPE_THIS) {
-            show()
+            action()
         } else {
             onNodeCall(childNodes[key])
         }
@@ -107,7 +107,7 @@ open class WorkTreeNode(
         return null
     }
 
-    open fun show() {
+    open fun action() {
         workBlockLazy.value?.action()
     }
     /**
@@ -126,7 +126,7 @@ open class WorkTreeNode(
     fun testShow(show: Int?) {
         if (show != null) {
             if (show == IWorkNode.Key.TYPE_THIS) {
-                show()
+                action()
             } else {
                 callNode(show)
             }
@@ -135,6 +135,9 @@ open class WorkTreeNode(
 
     internal fun onDestroy() {
         compositeDisposable.clear()
+        if (workBlockLazy.isInitialized()) {
+            workBlockLazy.value?.finish()
+        }
     }
 
     // region private
