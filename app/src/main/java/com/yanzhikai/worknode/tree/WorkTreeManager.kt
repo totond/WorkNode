@@ -34,7 +34,8 @@ class WorkTreeManager(private val root: WorkTreeNode) {
         }
     }
 
-    fun onDestroy() {
+    fun destroy() {
+        compositeDisposable.clear()
         curNode?.onFinish()
     }
 }

@@ -26,6 +26,9 @@ open class WorkTreeNode(
         private const val TAG = "WorkTreeNode"
     }
 
+    /**
+     * 流转的NodeData
+     */
     internal lateinit var nodeData: BaseNodeData
 
     private lateinit var manager: WorkTreeManager
@@ -95,7 +98,6 @@ open class WorkTreeNode(
     }
 
     override fun onBlockDismissCall() {
-        Log.i(TAG, "onDismissCall")
     }
 
     /**
@@ -137,7 +139,7 @@ open class WorkTreeNode(
 
     fun testShow(show: Int?) {
         if (show != null) {
-            if (show == IWorkNode.Key.TYPE_THIS) {
+            if (show == TYPE_THIS) {
                 action()
             } else {
                 callNode(show)

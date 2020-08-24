@@ -12,12 +12,18 @@ abstract class WorkBlock constructor(initialCallbackNum: Int) {
     var callBacks: HashMap<Int, BlockCallback> = HashMap(initialCallbackNum)
 
     /**
-     * 初始化用户操作Block
+     * 初始化用户操作Block,用于绑定回调
      */
     abstract fun init(data: BaseNodeData)
 
+    /**
+     * 用户交互操作实现
+     */
     abstract fun action()
 
+    /**
+     * 结束交互实现
+     */
     abstract fun finish()
 
     /**
